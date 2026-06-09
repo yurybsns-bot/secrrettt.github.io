@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#EF9F27"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="HeroPlanner"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>Hero Planner</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0f;
+  --bg2:#13131c;
+  --bg3:#1a1a28;
+  --border:#2a2a3f;
+  --text:#e8e8f0;
+  --text2:#8888aa;
+  --text3:#4a4a66;
+  --gold:#EF9F27;
+  --gold2:#FAC775;
+  --gold3:#BA7517;
+  --hp:#639922;
+  --hp2:#97C459;
+  --xp:#378ADD;
+  --xp2:#85B7EB;
+  --danger:#E24B4A;
+  --purple:#7F77DD;
+  --purple2:#CECBF6;
+  --r:10px;--r2:14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;padding-top:var(--safe-top)}
+
+/* Header */
+.header{padding:12px 16px 8px;display:flex;align-items:center;gap:10px;border-bottom:0.5px solid var(--border);flex-shrink:0}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:2px solid var(--gold3)}
+.hero-info{flex:1;min-width:0}
+.hero-name{font-size:14px;font-weight:600;color:var(--text)}
+.hero-sub{font-size:11px;color:var(--text2);margin-bottom:5px}
+.bars{display:flex;flex-direction:column;gap:3px}
+.bar-row{display:flex;align-items:center;gap:6px}
+.bar-lbl{font-size:10px;color:var(--text3);width:20px}
+.bar-track{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s}
+.bar-fill.hp{background:var(--hp2)}
+.bar-fill.xp{background:var(--xp)}
+.bar-fill.str{background:var(--purple)}
+.bar-num{font-size:10px;color:var(--text3);min-width:32px;text-align:right}
+.coins{text-align:right;flex-shrink:0}
+.coins-lbl{font-size:10px;color:var(--text2)}
+.coins-val{font-size:16px;font-weight:600;color:var(--gold)}
+
+/* Scroll area */
+.scroll{flex:1;overflow-y:auto;padding:12px 16px;padding-bottom:calc(70px + var(--safe-bottom))}
+.scroll::-webkit-scrollbar{width:3px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:0.5px solid var(--border);display:flex;padding-bottom:var(--safe-bottom);z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;border:none;background:transparent;color:var(--text2);font-size:10px;gap:3px;cursor:pointer;transition:color .15s}
+.nav-btn i{font-size:20px}
+.nav-btn.active{color:var(--gold)}
+.nav-btn.active i{color:var(--gold)}
+
+/* Panels */
+.panel{display:none}.panel.active{display:block}
+
+/* Quote */
+.quote{background:var(--bg3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;border:0.5px solid var(--border);font-size:12px;font-style:italic;color:var(--gold2);text-align:center;line-height:1.5}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.stat-card{background:var(--bg2);border-radius:var(--r);padding:8px;text-align:center;border:0.5px solid var(--border)}
+.stat-val{font-size:18px;font-weight:600;color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:1px}
+
+/* Section title */
+.sec{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600}
+.badge.gold{background:#2a1e00;color:var(--gold)}
+.badge.blue{background:#001a33;color:var(--xp2)}
+.badge.green{background:#0d1f00;color:var(--hp2)}
+.badge.purple{background:#1a1840;color:var(--purple2)}
+.badge.red{background:#2a0000;color:#f09595}
+
+/* Tasks */
+.tasks-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.task-col{background:var(--bg2);border-radius:var(--r2);border:0.5px solid var(--border);overflow:hidden}
+.task-col-hdr{padding:8px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border)}
+.task-item{padding:8px 10px;display:flex;align-items:flex-start;gap:7px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .1s;active:background:var(--bg3)}
+.task-item:last-child{border-bottom:none}
+.task-item:active{background:var(--bg3)}
+.chk{width:16px;height:16px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.done{background:var(--hp);border-color:var(--hp)}
+.task-txt{font-size:12px;color:var(--text);line-height:1.4;flex:1}
+.task-txt.done{text-decoration:line-through;color:var(--text3)}
+.task-xp{font-size:10px;color:var(--gold3);flex-shrink:0}
+.add-row{padding:7px 10px;display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text3);transition:color .1s}
+.add-row:active{color:var(--gold)}
+
+/* Workout week grid */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px}
+.wd{background:var(--bg2);border-radius:var(--r);padding:6px 2px;text-align:center;border:0.5px solid var(--border);cursor:pointer;transition:all .1s}
+.wd.done{background:#0d1f00;border-color:var(--hp)}
+.wd.today{border-color:var(--gold)}
+.wd:active{opacity:.7}
+.wd-n{font-size:9px;color:var(--text2)}
+.wd-d{font-size:14px;font-weight:600;color:var(--text);margin:2px 0}
+.wd-i{font-size:13px}
+
+/* XP Log */
+.xp-log{background:var(--bg2);border-radius:var(--r);padding:10px 12px;border:0.5px solid var(--border)}
+.xp-entry{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0;border-bottom:0.5px solid var(--border)}
+.xp-entry:last-child{border-bottom:none}
+.xp-gain{color:var(--gold);font-weight:600}
+.xp-time{color:var(--text3)}
+.xp-empty{font-size:11px;color:var(--text3);text-align:center;padding:8px}
+
+/* Month calendar */
+.cal-hdr{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
+.cal-hdr-cell{text-align:center;font-size:9px;color:var(--text3);font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:14px}
+.cal-day{background:var(--bg2);border-radius:5px;padding:3px 2px;text-align:center;font-size:11px;font-weight:600;min-height:34px;border:0.5px solid transparent;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;gap:1px}
+.cal-day.today{border-color:var(--gold)}
+.cal-day.wo{background:#0d1f00}
+.cal-day.other{opacity:.3}
+.cal-day:active{opacity:.7}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--xp)}
+
+/* Training */
+.train-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.train-card{background:var(--bg2);border-radius:var(--r2);border:0.5px solid var(--border);padding:12px}
+.tc-ico{font-size:20px;margin-bottom:4px}
+.tc-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.tc-prog{font-size:11px;color:var(--text2);margin-bottom:6px}
+.tc-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:8px}
+.tc-fill{height:100%;border-radius:2px;background:var(--danger);transition:width .3s}
+.tc-fill.done{background:var(--hp2)}
+.tc-controls{display:flex;align-items:center;gap:4px}
+.tc-controls input{flex:1;min-width:0;font-size:12px;padding:5px 6px;background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;color:var(--text);text-align:center}
+.tc-controls input:focus{outline:none;border-color:var(--gold)}
+.tc-btn{background:var(--bg3);border:0.5px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0}
+.tc-btn:active{background:var(--border);transform:scale(.93)}
+
+/* Input rows */
+.input-grp{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.input-grp input,.input-grp select{width:100%;padding:10px 12px;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px}
+.input-grp input:focus,.input-grp select:focus{outline:none;border-color:var(--gold)}
+.input-grp select{-webkit-appearance:none}
+.input-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btn-gold{width:100%;padding:11px;background:var(--gold);border:none;border-radius:var(--r);color:#0a0a0f;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .1s}
+.btn-gold:active{opacity:.8}
+
+/* Credits */
+.credit-card{background:var(--bg2);border-radius:var(--r2);border:0.5px solid var(--border);padding:12px;margin-bottom:8px}
+.cc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.cc-name{font-size:13px;font-weight:600;color:var(--text)}
+.cc-left{font-size:13px;font-weight:600;color:var(--danger)}
+.cc-left.paid{color:var(--hp2)}
+.cc-bar-t{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:5px}
+.cc-bar-f{height:100%;border-radius:3px;background:var(--xp);transition:width .4s}
+.cc-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:8px}
+.cc-pay{display:flex;gap:6px}
+.cc-pay input{flex:1;padding:7px 10px;background:var(--bg3);border:0.5px solid var(--border);border-radius:7px;color:var(--text);font-size:12px}
+.cc-pay input:focus{outline:none;border-color:var(--gold)}
+.cc-pay button{padding:7px 12px;background:var(--gold);border:none;border-radius:7px;color:#0a0a0f;font-size:12px;font-weight:700;cursor:pointer}
+.cc-pay button:active{opacity:.8}
+
+/* Chart wrapper */
+.chart-wrap{background:var(--bg2);border-radius:var(--r);padding:12px;border:0.5px solid var(--border);margin-bottom:14px}
+
+/* Modal / prompt */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border-radius:var(--r2);border:0.5px solid var(--border);padding:20px;width:100%;max-width:320px}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text)}
+.modal input{width:100%;padding:10px 12px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;margin-bottom:8px}
+.modal input:focus{outline:none;border-color:var(--gold)}
+.modal-btns{display:flex;gap:8px;margin-top:4px}
+.modal-btns button{flex:1;padding:10px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none}
+.btn-cancel{background:var(--bg3);color:var(--text2)}
+.btn-confirm{background:var(--gold);color:#0a0a0f}
+
+/* Install banner */
+.install-banner{background:var(--bg3);border:0.5px solid var(--gold3);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.install-banner p{font-size:12px;color:var(--text2);line-height:1.4}
+.install-banner p strong{color:var(--gold);display:block;font-size:13px;margin-bottom:2px}
+.install-btns{display:flex;gap:6px;flex-shrink:0}
+.install-btns button{padding:6px 10px;border-radius:7px;font-size:11px;font-weight:600;border:none;cursor:pointer;white-space:nowrap}
+.btn-install{background:var(--gold);color:#0a0a0f}
+.btn-dismiss{background:var(--bg2);color:var(--text2)}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="avatar">🥊</div>
+    <div class="hero-info">
+      <div class="hero-name" id="hname">Герой Класса C</div>
+      <div class="hero-sub" id="hlevel">Ассоциация Героев · Уровень 1</div>
+      <div class="bars">
+        <div class="bar-row"><span class="bar-lbl">HP</span><div class="bar-track"><div class="bar-fill hp" id="b-hp" style="width:75%"></div></div><span class="bar-num" id="v-hp">75</span></div>
+        <div class="bar-row"><span class="bar-lbl">XP</span><div class="bar-track"><div class="bar-fill xp" id="b-xp" style="width:30%"></div></div><span class="bar-num" id="v-xp">30</span></div>
+        <div class="bar-row"><span class="bar-lbl">STR</span><div class="bar-track"><div class="bar-fill str" id="b-str" style="width:20%"></div></div><span class="bar-num" id="v-str">20</span></div>
+      </div>
+    </div>
+    <div class="coins"><div class="coins-lbl">Монеты</div><div class="coins-val" id="v-coins">🪙 0</div></div>
+  </div>
+
+  <!-- Scroll content -->
+  <div class="scroll" id="scroll-area">
+    <!-- WEEK -->
+    <div id="panel-week" class="panel active">
+      <div id="install-banner" class="install-banner" style="display:none">
+        <div><p><strong>Установи приложение!</strong>Доступ с главного экрана, работает офлайн</p></div>
+        <div class="install-btns">
+          <button class="btn-install" id="btn-install-pwa">Установить</button>
+          <button class="btn-dismiss" id="btn-dismiss">✕</button>
+        </div>
+      </div>
+      <div class="quote" id="daily-quote"></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="ws-done">0</div><div class="stat-lbl">Задач</div></div>
+        <div class="stat-card"><div class="stat-val" id="ws-xp">0</div><div class="stat-lbl">XP</div></div>
+        <div class="stat-card"><div class="stat-val" id="ws-streak">0</div><div class="stat-lbl">Серия</div></div>
+        <div class="stat-card"><div class="stat-val" id="ws-pct">0%</div><div class="stat-lbl">Прогресс</div></div>
+      </div>
+      <div class="sec"><i class="ti ti-list-check"></i> Квесты <span class="badge gold" id="task-cnt">0/0</span></div>
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-hdr"><span>Личные</span><span class="badge purple">Квесты</span></div>
+          <div id="personal-tasks"></div>
+          <div class="add-row" onclick="openAddTask('personal')"><i class="ti ti-plus" style="font-size:14px"></i> Добавить</div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-hdr"><span>Работа</span><span class="badge blue">Миссии</span></div>
+          <div id="work-tasks"></div>
+          <div class="add-row" onclick="openAddTask('work')"><i class="ti ti-plus" style="font-size:14px"></i> Добавить</div>
+        </div>
+      </div>
+      <div class="sec"><i class="ti ti-calendar-week"></i> Тренировки недели</div>
+      <div class="week-grid" id="week-wo-grid"></div>
+      <div class="sec" style="margin-top:4px"><i class="ti ti-history"></i> Лог XP</div>
+      <div class="xp-log" id="xp-log"></div>
+    </div>
+
+    <!-- MONTH -->
+    <div id="panel-month" class="panel">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="ms-tasks">0</div><div class="stat-lbl">Задач</div></div>
+        <div class="stat-card"><div class="stat-val" id="ms-wo">0</div><div class="stat-lbl">Тренировок</div></div>
+        <div class="stat-card"><div class="stat-val" id="ms-xp">0</div><div class="stat-lbl">XP</div></div>
+        <div class="stat-card"><div class="stat-val" id="ms-streak">0</div><div class="stat-lbl">Макс. серия</div></div>
+      </div>
+      <div class="sec"><i class="ti ti-calendar"></i> Июнь 2026</div>
+      <div class="cal-hdr">
+        <div class="cal-hdr-cell">Пн</div><div class="cal-hdr-cell">Вт</div><div class="cal-hdr-cell">Ср</div>
+        <div class="cal-hdr-cell">Чт</div><div class="cal-hdr-cell">Пт</div><div class="cal-hdr-cell">Сб</div><div class="cal-hdr-cell">Вс</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="sec"><i class="ti ti-chart-bar"></i> Активность по неделям</div>
+      <div class="chart-wrap"><canvas id="month-chart" height="100"></canvas></div>
+    </div>
+
+    <!-- TRAIN -->
+    <div id="panel-train" class="panel">
+      <div class="quote">"Тренируйся, пока не станет больно. Потом тренируйся ещё немного."</div>
+      <div class="sec"><i class="ti ti-flame"></i> Режим Сайтамы</div>
+      <div class="train-grid" id="train-grid"></div>
+      <div class="sec"><i class="ti ti-plus"></i> Своё упражнение</div>
+      <div class="input-grp">
+        <input type="text" id="ex-name" placeholder="Название упражнения" />
+        <div class="input-row2">
+          <input type="number" id="ex-goal" placeholder="Цель (число)" min="1" />
+          <select id="ex-unit"><option>раз</option><option>км</option><option>мин</option><option>сек</option></select>
+        </div>
+        <button class="btn-gold" onclick="addExercise()">Добавить упражнение</button>
+      </div>
+      <div class="sec" style="margin-top:4px"><i class="ti ti-calendar-week"></i> Неделя</div>
+      <div class="week-grid" id="train-wo-grid"></div>
+    </div>
+
+    <!-- CREDITS -->
+    <div id="panel-credits" class="panel">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="cr-debt" style="color:var(--danger)">0€</div><div class="stat-lbl">Долг</div></div>
+        <div class="stat-card"><div class="stat-val" id="cr-monthly">0€</div><div class="stat-lbl">В мес.</div></div>
+        <div class="stat-card"><div class="stat-val" id="cr-paid">0€</div><div class="stat-lbl">Уплачено</div></div>
+        <div class="stat-card"><div class="stat-val" id="cr-free">0</div><div class="stat-lbl">Мес. до ∞</div></div>
+      </div>
+      <div class="sec"><i class="ti ti-credit-card"></i> Мои кредиты</div>
+      <div id="credits-list"></div>
+      <div class="sec" style="margin-top:4px"><i class="ti ti-plus"></i> Добавить кредит</div>
+      <div class="input-grp">
+        <input type="text" id="cr-name" placeholder="Название (напр. Автокредит)" />
+        <div class="input-row2">
+          <input type="number" id="cr-total" placeholder="Сумма (€)" min="1" />
+          <input type="number" id="cr-mon" placeholder="Взнос/мес (€)" min="1" />
+        </div>
+        <button class="btn-gold" onclick="addCredit()">Добавить кредит</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('week',0)" id="nav-0"><i class="ti ti-calendar-week"></i>Неделя</button>
+    <button class="nav-btn" onclick="switchTab('month',1)" id="nav-1"><i class="ti ti-calendar"></i>Месяц</button>
+    <button class="nav-btn" onclick="switchTab('train',2)" id="nav-2"><i class="ti ti-barbell"></i>Тренировки</button>
+    <button class="nav-btn" onclick="switchTab('credits',3)" id="nav-3"><i class="ti ti-credit-card"></i>Кредиты</button>
+  </div>
+</div>
+
+<!-- Add task modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <h3>Новый квест</h3>
+    <input type="text" id="m-task-text" placeholder="Описание квеста..." maxlength="60" />
+    <input type="number" id="m-task-xp" placeholder="XP (5–50)" min="5" max="50" value="10" />
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-confirm" onclick="confirmAddTask()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────
+const KEY = 'hero_planner_v2';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+
+const DEFAULT = {
+  xp:30,hp:75,str:20,level:1,coins:0,
+  tasks:{
+    personal:[
+      {id:1,text:'Прочитать 20 стр. книги',done:false,xp:10},
+      {id:2,text:'Медитация 10 мин',done:false,xp:5}
+    ],
+    work:[
+      {id:3,text:'Завершить отчёт',done:false,xp:20},
+      {id:4,text:'Email коллегам',done:false,xp:5}
+    ]
+  },
+  workouts:{},
+  training:[
+    {id:'t1',name:'Отжимания',icon:'ti-arrow-up',done:0,goal:100,unit:'раз'},
+    {id:'t2',name:'Приседания',icon:'ti-arrows-down-up',done:0,goal:100,unit:'раз'},
+    {id:'t3',name:'Подтягивания',icon:'ti-trending-up',done:0,goal:100,unit:'раз'},
+    {id:'t4',name:'Бег',icon:'ti-run',done:0,goal:10,unit:'км'},
+    {id:'t5',name:'Пресс',icon:'ti-storm',done:0,goal:100,unit:'раз'},
+    {id:'t6',name:'Планка',icon:'ti-clock',done:0,goal:5,unit:'мин'}
+  ],
+  credits:[],
+  xpLog:[],
+  maxStreak:0
+};
+
+let S = load() || JSON.parse(JSON.stringify(DEFAULT));
+
+const today = new Date();
+const todayKey = today.toISOString().slice(0,10);
+const DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const QUOTES = [
+  '"100 отжиманий, 100 приседаний, 100 подтягиваний и 10 км бега каждый день!"',
+  '"Я просто хобби-герой. Я стал сильным, потому что хотел."',
+  '"Настоящий герой не ждёт признания."',
+  '"Сила — это не то, что тебе дано. Это то, что ты берёшь."',
+  '"Вставай. Тренируйся. Побеждай. Повтори."',
+  '"Не важно, насколько ты силён — важно, насколько ты упорен."'
+];
+
+// ── Helpers ────────────────────────────────────────────
+function getWeekDays(){
+  const d=new Date(today); const dow=d.getDay();
+  const mon=new Date(d); mon.setDate(d.getDate()-(dow===0?6:dow-1));
+  return Array.from({length:7},(_,i)=>{ const x=new Date(mon); x.setDate(mon.getDate()+i); return x; });
+}
+
+function addXP(amount,label){
+  S.xp=Math.min(S.xp+amount,100);
+  S.coins+=Math.floor(amount/5);
+  S.str=Math.min(S.str+Math.floor(amount/10),100);
+  if(S.xp>=100){ S.level++; S.xp=0; S.hp=Math.min(S.hp+20,100); }
+  const now=new Date();
+  S.xpLog.unshift({label,xp:amount,time:now.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+  if(S.xpLog.length>30) S.xpLog.pop();
+  save(); renderAll();
+}
+
+// ── Modal ──────────────────────────────────────────────
+let _modalCol='personal';
+function openAddTask(col){ _modalCol=col; document.getElementById('m-task-text').value=''; document.getElementById('m-task-xp').value='10'; document.getElementById('task-modal').classList.add('show'); document.getElementById('m-task-text').focus(); }
+function closeModal(){ document.getElementById('task-modal').classList.remove('show'); }
+function confirmAddTask(){
+  const text=document.getElementById('m-task-text').value.trim();
+  if(!text) return;
+  const xpv=Math.min(50,Math.max(5,parseInt(document.getElementById('m-task-xp').value)||10));
+  S.tasks[_modalCol].push({id:Date.now(),text,done:false,xp:xpv});
+  closeModal(); save(); renderAll();
+}
+document.getElementById('task-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('task-modal')) closeModal(); });
+
+// ── Tabs ───────────────────────────────────────────────
+const TABS=['week','month','train','credits'];
+function switchTab(name,idx){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('nav-'+idx).classList.add('active');
+  if(name==='month') setTimeout(renderChart,50);
+}
+
+// ── Render Hero ────────────────────────────────────────
+function renderHero(){
+  const cls=S.level>=10?'Класс S':S.level>=5?'Класс A':S.level>=3?'Класс B':'Класс C';
+  document.getElementById('hname').textContent='Герой '+cls;
+  document.getElementById('hlevel').textContent='Ассоциация Героев · Уровень '+S.level;
+  document.getElementById('b-hp').style.width=S.hp+'%';
+  document.getElementById('v-hp').textContent=S.hp;
+  document.getElementById('b-xp').style.width=S.xp+'%';
+  document.getElementById('v-xp').textContent=S.xp;
+  document.getElementById('b-str').style.width=S.str+'%';
+  document.getElementById('v-str').textContent=S.str;
+  document.getElementById('v-coins').textContent='🪙 '+S.coins;
+}
+
+// ── Render Tasks ───────────────────────────────────────
+function renderTasks(){
+  ['personal','work'].forEach(col=>{
+    const el=document.getElementById(col+'-tasks');
+    if(!el) return;
+    el.innerHTML='';
+    S.tasks[col].forEach(t=>{
+      const d=document.createElement('div');
+      d.className='task-item';
+      d.onclick=()=>toggleTask(col,t.id);
+      d.innerHTML=`<div class="chk${t.done?' done':''}">${t.done?'<i class="ti ti-check" style="font-size:10px;color:#fff"></i>':''}</div><span class="task-txt${t.done?' done':''}">${t.text}</span><span class="task-xp">+${t.xp}xp</span>`;
+      el.appendChild(d);
+    });
+  });
+  const all=[...S.tasks.personal,...S.tasks.work];
+  const done=all.filter(x=>x.done).length;
+  document.getElementById('task-cnt').textContent=done+'/'+all.length;
+  document.getElementById('ws-done').textContent=done;
+  document.getElementById('ws-xp').textContent=all.filter(x=>x.done).reduce((s,x)=>s+x.xp,0);
+  document.getElementById('ws-pct').textContent=all.length?Math.round(done/all.length*100)+'%':'0%';
+  document.getElementById('ms-tasks').textContent=done;
+}
+
+function toggleTask(col,id){
+  const t=S.tasks[col].find(x=>x.id===id); if(!t) return;
+  t.done=!t.done;
+  if(t.done){ S.workouts[todayKey]=(S.workouts[todayKey]||0)+1; addXP(t.xp,t.text.slice(0,24)); }
+  else{ S.xp=Math.max(0,S.xp-t.xp); S.coins=Math.max(0,S.coins-Math.floor(t.xp/5)); save(); renderAll(); }
+}
+
+// ── Week workout grid ──────────────────────────────────
+function renderWeekGrid(id){
+  const grid=document.getElementById(id); if(!grid) return;
+  const days=getWeekDays(); let streak=0,cur=0,maxS=0;
+  grid.innerHTML='';
+  days.forEach((d,i)=>{
+    const k=d.toISOString().slice(0,10);
+    const done=(S.workouts[k]||0)>0;
+    const isT=k===todayKey;
+    const el=document.createElement('div');
+    el.className='wd'+(done?' done':'')+(isT?' today':'');
+    el.innerHTML=`<div class="wd-n">${DAYS[i]}</div><div class="wd-d">${d.getDate()}</div><div class="wd-i">${done?'🔥':isT?'⚡':'○'}</div>`;
+    el.onclick=()=>{ S.workouts[k]=done?0:1; save(); renderAll(); };
+    grid.appendChild(el);
+    if(done){ cur++; maxS=Math.max(maxS,cur); } else cur=0;
+    if(d<=today) streak=cur;
+  });
+  document.getElementById('ws-streak') && (document.getElementById('ws-streak').textContent=streak);
+  document.getElementById('ms-streak') && (document.getElementById('ms-streak').textContent=maxS);
+}
+
+// ── XP Log ─────────────────────────────────────────────
+function renderXpLog(){
+  const el=document.getElementById('xp-log'); if(!el) return;
+  if(!S.xpLog.length){ el.innerHTML='<div class="xp-empty">Выполни первый квест!</div>'; return; }
+  el.innerHTML=S.xpLog.map(e=>`<div class="xp-entry"><span>${e.label}</span><span style="display:flex;gap:8px"><span class="xp-gain">+${e.xp}xp</span><span class="xp-time">${e.time}</span></span></div>`).join('');
+}
+
+// ── Month calendar ─────────────────────────────────────
+function renderCalendar(){
+  const grid=document.getElementById('cal-grid'); if(!grid) return;
+  const y=today.getFullYear(),m=today.getMonth();
+  const first=new Date(y,m,1); let dow=first.getDay(); if(dow===0)dow=7;
+  grid.innerHTML='';
+  for(let i=1;i<dow;i++){
+    const d=new Date(y,m,1-(dow-i));
+    const el=document.createElement('div'); el.className='cal-day other'; el.textContent=d.getDate(); grid.appendChild(el);
+  }
+  const last=new Date(y,m+1,0);
+  for(let d=1;d<=last.getDate();d++){
+    const date=new Date(y,m,d);
+    const k=date.toISOString().slice(0,10);
+    const isT=k===todayKey; const wo=(S.workouts[k]||0)>0;
+    const el=document.createElement('div');
+    el.className='cal-day'+(isT?' today':'')+(wo?' wo':'');
+    el.innerHTML=`<span>${d}</span>${wo?'<div class="cal-dot"></div>':''}`;
+    el.onclick=()=>{ S.workouts[k]=wo?0:1; save(); renderAll(); };
+    grid.appendChild(el);
+  }
+  const woCount=Object.values(S.workouts).filter(v=>v>0).length;
+  document.getElementById('ms-wo').textContent=woCount;
+  document.getElementById('ms-xp').textContent=S.xp+S.level*100;
+}
+
+// ── Month chart ────────────────────────────────────────
+let chartInst=null;
+function renderChart(){
+  const canvas=document.getElementById('month-chart'); if(!canvas) return;
+  const y=today.getFullYear(),m=today.getMonth();
+  const data=[0,0,0,0];
+  for(let d=1;d<=31;d++){
+    const date=new Date(y,m,d); if(date.getMonth()!==m) break;
+    const k=date.toISOString().slice(0,10);
+    if((S.workouts[k]||0)>0) data[Math.min(3,Math.floor((d-1)/7))]++;
+  }
+  if(chartInst){ chartInst.destroy(); chartInst=null; }
+  Chart.defaults.color='#8888aa';
+  chartInst=new Chart(canvas,{
+    type:'bar',
+    data:{ labels:['Нед 1','Нед 2','Нед 3','Нед 4'], datasets:[{data,backgroundColor:'#378ADD',borderRadius:5,borderSkipped:false}] },
+    options:{ responsive:true,plugins:{legend:{display:false}},scales:{ y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'#2a2a3f'}}, x:{ticks:{font:{size:10}},grid:{color:'#2a2a3f'}} } }
+  });
+}
+
+// ── Training ───────────────────────────────────────────
+function renderTraining(){
+  const grid=document.getElementById('train-grid'); if(!grid) return;
+  grid.innerHTML='';
+  S.training.forEach(ex=>{
+    const pct=Math.round(ex.done/ex.goal*100);
+    const card=document.createElement('div'); card.className='train-card';
+    card.innerHTML=`
+      <div class="tc-ico"><i class="ti ${ex.icon}"></i></div>
+      <div class="tc-name">${ex.name}</div>
+      <div class="tc-prog">${ex.done}/${ex.goal} ${ex.unit} (${pct}%)</div>
+      <div class="tc-bar"><div class="tc-fill${pct>=100?' done':''}" style="width:${Math.min(100,pct)}%"></div></div>
+      <div class="tc-controls">
+        <button class="tc-btn" onclick="updateEx('${ex.id}',-getExVal('${ex.id}'))">−</button>
+        <input type="number" id="ti-${ex.id}" value="10" min="1" />
+        <button class="tc-btn" onclick="updateEx('${ex.id}',getExVal('${ex.id}'))">+</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+  renderWeekGrid('train-wo-grid');
+}
+
+function getExVal(id){ return parseInt(document.getElementById('ti-'+id)?.value)||10; }
+
+function updateEx(id,val){
+  const ex=S.training.find(x=>x.id===id); if(!ex) return;
+  const prev=ex.done;
+  ex.done=Math.min(ex.goal,Math.max(0,ex.done+val));
+  if(ex.done>prev){ S.workouts[todayKey]=(S.workouts[todayKey]||0)+1; addXP(Math.floor((ex.done-prev)/ex.goal*15)+3,ex.name); }
+  else{ save(); renderAll(); }
+}
+
+function addExercise(){
+  const name=document.getElementById('ex-name').value.trim();
+  const goal=parseInt(document.getElementById('ex-goal').value)||10;
+  const unit=document.getElementById('ex-unit').value;
+  if(!name) return;
+  S.training.push({id:'c'+Date.now(),name,icon:'ti-bolt',done:0,goal,unit});
+  document.getElementById('ex-name').value=''; document.getElementById('ex-goal').value='';
+  save(); renderTraining();
+}
+
+// ── Credits ────────────────────────────────────────────
+function renderCredits(){
+  const el=document.getElementById('credits-list'); if(!el) return;
+  let debt=0,monthly=0,paid=0;
+  el.innerHTML='';
+  S.credits.forEach(cr=>{
+    debt+=cr.total-cr.paid; monthly+=cr.monthly; paid+=cr.paid;
+    const pct=Math.round(cr.paid/cr.total*100);
+    const d=document.createElement('div'); d.className='credit-card';
+    d.innerHTML=`
+      <div class="cc-row"><span class="cc-name">${cr.name}</span><span class="cc-left${cr.paid>=cr.total?' paid':''}">${cr.paid>=cr.total?'✅ Погашен':'−'+Math.round(cr.total-cr.paid)+'€'}</span></div>
+      <div class="cc-bar-t"><div class="cc-bar-f" style="width:${pct}%"></div></div>
+      <div class="cc-meta"><span>${pct}% выплачено</span><span>${cr.monthly}€/мес</span></div>
+      ${cr.paid<cr.total?`<div class="cc-pay"><input type="number" id="pay-${cr.id}" value="${cr.monthly}" min="1" /><button onclick="makePayment(${cr.id})">Внести</button></div>`:''}`;
+    el.appendChild(d);
+  });
+  document.getElementById('cr-debt').textContent=Math.round(debt)+'€';
+  document.getElementById('cr-monthly').textContent=Math.round(monthly)+'€';
+  document.getElementById('cr-paid').textContent=Math.round(paid)+'€';
+  document.getElementById('cr-free').textContent=monthly>0?Math.ceil(debt/monthly):0;
+}
+
+function addCredit(){
+  const name=document.getElementById('cr-name').value.trim();
+  const total=parseFloat(document.getElementById('cr-total').value)||0;
+  const mon=parseFloat(document.getElementById('cr-mon').value)||0;
+  if(!name||total<=0) return;
+  S.credits.push({id:Date.now(),name,total,monthly:mon,paid:0});
+  document.getElementById('cr-name').value=''; document.getElementById('cr-total').value=''; document.getElementById('cr-mon').value='';
+  save(); renderCredits();
+}
+
+function makePayment(id){
+  const cr=S.credits.find(x=>x.id===id); if(!cr) return;
+  const inp=document.getElementById('pay-'+id);
+  const amount=parseFloat(inp?.value)||cr.monthly;
+  cr.paid=Math.min(cr.total,cr.paid+amount);
+  addXP(10,'Выплата: '+cr.name);
+}
+
+// ── Render All ─────────────────────────────────────────
+function renderAll(){
+  renderHero();
+  renderTasks();
+  renderWeekGrid('week-wo-grid');
+  renderXpLog();
+  renderCalendar();
+  renderTraining();
+  renderCredits();
+}
+
+// ── PWA Install ────────────────────────────────────────
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredPrompt=e;
+  const banner=document.getElementById('install-banner');
+  if(banner) banner.style.display='flex';
+});
+document.getElementById('btn-install-pwa')?.addEventListener('click',async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome}=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('install-banner').style.display='none';
+});
+document.getElementById('btn-dismiss')?.addEventListener('click',()=>{
+  document.getElementById('install-banner').style.display='none';
+});
+window.addEventListener('appinstalled',()=>{ document.getElementById('install-banner').style.display='none'; });
+
+// ── Service Worker ─────────────────────────────────────
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ── Init ───────────────────────────────────────────────
+document.getElementById('daily-quote').textContent=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+renderAll();
+</script>
+</body>
+</html>
